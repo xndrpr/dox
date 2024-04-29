@@ -1,8 +1,6 @@
 # Dox
 
-Dox is a automation system for telegram(3rd on my github..);
-
-Similar project in rust: https://github.com/velaton618/quantum
+Dox is a automation system for [Telegram](https://telegram.org/).
 
 ## Get started
 To get started you need an API_ID and API_HASH from https://core.telegram.org/api/obtaining_api_id
@@ -45,3 +43,26 @@ Example:
     ]
 }
 ```
+
+
+# Roadmap
+- keywords
+    - @str, @number, @yes, @no, *etc.*
+- Sending media
+    - Files
+    - Images
+    - Photos
+    - Videos
+    - Audios
+    - Stickers
+    - Gifs
+- Storing the messages
+    - Options like google drive, sqlite db, local json file, or posting to channel
+- OpenAI API
+    - Be able to use OpenAI API to do some actions with the messages
+- Group actions
+    - Invite Users
+    - Ban Users
+
+# Credits
+[gram.js](https://gram.js.org)
