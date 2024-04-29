@@ -2,6 +2,8 @@
 
 Dox is a automation system for telegram(3rd on my github..);
 
+Similar project in rust: https://github.com/velaton618/quantum
+
 ## Get started
 To get started you need an API_ID and API_HASH from https://core.telegram.org/api/obtaining_api_id
 
