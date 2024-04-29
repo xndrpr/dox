@@ -2,6 +2,9 @@
 
 Dox is a automation system for [Telegram](https://telegram.org/).
 
+> [!WARNING]
+> This project is in early development state, so there are some bugs and some features are not yet implemented.
+
 ## Get started
 To get started you need an API_ID and API_HASH from https://core.telegram.org/api/obtaining_api_id
 
