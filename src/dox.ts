@@ -24,11 +24,11 @@ export async function handle_update(event: NewMessageEvent) {
 
   if (shared.waiting_message) {
     if (event.message.text === shared.waiting_message.target) {
-      console.log(shared.waiting_message);
       await event.message.reply({ message: shared.waiting_message.reply });
 
       if (shared.waiting_message.wait_message) {
         shared.waiting_message = shared.waiting_message.wait_message;
+        shared.time_since_last_message = 0;
       } else {
         shared.waiting_message = undefined;
       }
@@ -39,14 +39,26 @@ export async function handle_update(event: NewMessageEvent) {
 export async function START(telegram: Telegram, config: IConfig) {
   while (true) {
     try {
-      if (shared.waiting_message) { await new Promise((resolve) => setTimeout(resolve, 1 * 1000)); continue; }
+      if (shared.waiting_message) {
+        if (shared.waiting_message.timeout
+          && shared.time_since_last_message
+          && (shared.time_since_last_message >= shared.waiting_message.timeout)) {
+          shared.waiting_message = undefined;
+          shared.time_since_last_message = 0;
+        }
+
+        shared.time_since_last_message = shared.time_since_last_message + 1;
+        await new Promise((resolve) => setTimeout(resolve, 1 * 1000));
+
+        continue;
+      }
 
       const message = config.messages.find((message) => message.id === shared.last_message + 1);
       if (!message) { shared.last_message = 0; continue; }
 
       await telegram.client.sendMessage(config.target, { message: message.text });
 
-      if (message.wait_message) { shared.waiting_message = message.wait_message; }
+      if (message.wait_message) { shared.waiting_message = message.wait_message; shared.time_since_last_message = 0; }
       shared.last_message = message.id;
 
       await new Promise((resolve) => setTimeout(resolve, message.delay * 1000));

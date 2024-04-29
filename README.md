@@ -38,10 +38,10 @@ Example:
                         "target": "I'm fine too",
                         "reply": "That's great to hear. How can I help you today?"
                     }
-                }
+                },
+                "timeout": 5 // 5 seconds before stop  waiting
             },
-            "delay": 1, // In seconds
-            // "timeout": 1 // In seconds
+            "delay": 1, // 1 second before next message
         }
     ]
 }
@@ -49,7 +49,7 @@ Example:
 
 
 # Roadmap
-- timeout to not wait forever
+- ~~timeout to not wait forever~~
 - keywords
     - @str, @number, @yes, @no, *etc.*
 - Sending media
