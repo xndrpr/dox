@@ -67,6 +67,10 @@ Example:
 - Group actions
     - Invite Users
     - Ban Users
+- Copying
+    - Copy all messages from a chat
+    - Copy all posts from a channel
+    - Copy all messages from a group
 
 # Credits
 [gram.js](https://gram.js.org)
