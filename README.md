@@ -25,7 +25,7 @@ Example:
     "messages": [
         {
             "text": ".next",
-            "wait_message": { // DOX will wait **forever** until this message is received. Unless use set a timeout option
+            "wait_message": { // DOX will wait **forever** until this message is received. Unless use set a timeout option(NOT YET IMPLEMENTED)
                 "target": "Hi",
                 "reply": "Hello",
                 "wait_message": {
@@ -46,6 +46,7 @@ Example:
 
 
 # Roadmap
+- timeout to not wait forever
 - keywords
     - @str, @number, @yes, @no, *etc.*
 - Sending media
