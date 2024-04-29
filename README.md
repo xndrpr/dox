@@ -29,14 +29,18 @@ Example:
         {
             "text": ".next",
             "wait_message": { // DOX will wait **forever** until this message is received. Unless use set a timeout option(NOT YET IMPLEMENTED)
-                "target": "Hi",
+                "target": "@str",
                 "reply": "Hello",
                 "wait_message": {
-                    "target": "How are you?",
-                    "reply": "I'm fine, thank you. How are you?",
+                    "target": "@yes",
+                    "reply": "Are you okay?",
                     "wait_message": {
-                        "target": "I'm fine too",
-                        "reply": "That's great to hear. How can I help you today?"
+                        "target": "@no",
+                        "reply": "Oh.. Im sorry to hear that. How old are you?",
+                        "wait_message": {
+                            "target": "@num",
+                            "reply": "Oh so you a kid!"
+                        }
                     }
                 },
                 "timeout": 5 // 5 seconds before stop  waiting

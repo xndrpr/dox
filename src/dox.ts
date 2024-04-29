@@ -4,6 +4,7 @@ import { Telegram } from "./helpers/telegram.helper";
 import { IConfig } from "./models/IConfig";
 import { NewMessageEvent } from "telegram/events";
 import { shared } from "./shared";
+import * as keywords from "./keywords";
 
 export async function check_block(telegram: Telegram, config: IConfig) {
   try {
@@ -23,7 +24,24 @@ export async function handle_update(event: NewMessageEvent) {
   if (!event.isPrivate) return;
 
   if (shared.waiting_message) {
-    if (event.message.text === shared.waiting_message.target) {
+    if (shared.waiting_message.target.includes("@")) {
+      switch (shared.waiting_message.target) {
+        case "@str":
+          if (!keywords.KEYWORDS["@str"].test(event.message.text)) return;
+          break;
+        case "@num":
+          if (!keywords.KEYWORDS["@num"].test(event.message.text)) return;
+          break;
+        case "@yes":
+          if (!keywords.KEYWORDS["@yes"].test(event.message.text)) return;
+          break;
+        case "@no":
+          if (!keywords.KEYWORDS["@no"].test(event.message.text)) return;
+          break;
+        default:
+          return;
+      }
+
       await event.message.reply({ message: shared.waiting_message.reply });
 
       if (shared.waiting_message.wait_message) {
@@ -31,6 +49,17 @@ export async function handle_update(event: NewMessageEvent) {
         shared.time_since_last_message = 0;
       } else {
         shared.waiting_message = undefined;
+      }
+    } else {
+      if (event.message.text === shared.waiting_message.target) {
+        await event.message.reply({ message: shared.waiting_message.reply });
+
+        if (shared.waiting_message.wait_message) {
+          shared.waiting_message = shared.waiting_message.wait_message;
+          shared.time_since_last_message = 0;
+        } else {
+          shared.waiting_message = undefined;
+        }
       }
     }
   }
