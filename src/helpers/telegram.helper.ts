@@ -1,15 +1,9 @@
-
-// * That is because @types/input is 404. 
-// TODO: Switch to another library in the future.
-// @ts-ignore
-import input from "input";
-
-import { read, readFileSync, writeFileSync } from "fs";
+import { readFileSync, writeFileSync } from "fs";
 import { TelegramClient } from "telegram";
 import { StringSession } from "telegram/sessions";
-import { config } from "dotenv";
 import { LogLevel } from "telegram/extensions/Logger";
 import { SESSION } from "../config";
+import * as reaedline from "readline";
 
 export class Telegram {
   client: TelegramClient;
@@ -23,12 +17,26 @@ export class Telegram {
     this.client.setLogLevel(LogLevel.ERROR);
   }
 
+  async input(text: string) {
+    const rl = reaedline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+
+    return new Promise<string>((resolve) => {
+      rl.question(text, (answer) => {
+        rl.close();
+        resolve(answer);
+      });
+    });
+  }
+
   async start() {
     await this.client.start({
-      phoneNumber: async () => await input.text("Please enter your number: "),
-      password: async () => await input.text("Please enter your password: "),
+      phoneNumber: async () => await this.input("Please enter your number: "),
+      password: async () => await this.input("Please enter your password: "),
       phoneCode: async () =>
-        await input.text("Please enter the code you received: "),
+        await this.input("Please enter the code you received: "),
       onError: (err) => console.log(err),
     });
     const session = this.client.session.save();

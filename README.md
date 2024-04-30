@@ -29,7 +29,7 @@ Example:
         {
             "text": ".next",
             "wait_message": { // DOX will wait **forever** until this message is received. Unless use set a timeout option(NOT YET IMPLEMENTED)
-                "target": "@str",
+                "target": "@all",
                 "reply": "Hello",
                 "wait_message": {
                     "target": "@yes",
@@ -51,11 +51,21 @@ Example:
 }
 ```
 
+## Keywords
+- @all
+    - Any images
+- @num
+    - Any numbers inside the text
+- @yes
+    - Yes word in different languages
+- @no
+    - No word in different languages
+
 
 # Roadmap
 - ~~timeout to not wait forever~~
-- keywords
-    - @str, @number, @yes, @no, *etc.*
+- ~~keywords~~
+    - ~~@all, @num, @yes, @no, etc.~~
 - Sending media
     - Files
     - Images

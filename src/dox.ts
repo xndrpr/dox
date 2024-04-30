@@ -8,7 +8,7 @@ import * as keywords from "./keywords";
 
 export async function check_block(telegram: Telegram, config: IConfig) {
   try {
-    await telegram.client.sendMessage(config.target, { message: "ENTER" });
+    await telegram.client.sendMessage(config.target, { message: "Жив?" });
   } catch (e: any) {
     if (e.errorMessage === "YOU_BLOCKED_USER") {
       await telegram.client.invoke(new Api.contacts.Unblock({ id: config.target }));
@@ -26,8 +26,8 @@ export async function handle_update(event: NewMessageEvent) {
   if (shared.waiting_message) {
     if (shared.waiting_message.target.includes("@")) {
       switch (shared.waiting_message.target) {
-        case "@str":
-          if (!keywords.KEYWORDS["@str"].test(event.message.text)) return;
+        case "@all":
+          if (!event.message.text) return;
           break;
         case "@num":
           if (!keywords.KEYWORDS["@num"].test(event.message.text)) return;
