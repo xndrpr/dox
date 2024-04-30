@@ -36,7 +36,7 @@ export async function handle_update(event: NewMessageEvent) {
   if (!event.isPrivate) return;
 
   let id;
-  if (cfg.CONFIG.target.includes("@")) {
+  if (cfg.CONFIG.target.includes("@") || typeof cfg.CONFIG.target === "string") {
     try {
       const result = await shared.telegram?.client.invoke(new Api.contacts.ResolveUsername({ username: cfg.CONFIG.target.replace("@", "") }));
 
@@ -75,7 +75,7 @@ export async function handle_update(event: NewMessageEvent) {
 
     if (event.message.text.includes(parallel.target)) {
       if (parallel.reply.length < 1) return;
-      
+
       if (shared.storeChats) {
         shared.currentChat?.messages.push({
           from: "me",
@@ -92,6 +92,7 @@ export async function handle_update(event: NewMessageEvent) {
   });
 
   if (shared.waitingMessage) {
+    console.log(event.message.text, shared.waitingMessage.target);
     if (shared.waitingMessage.target.includes("@")) {
       switch (shared.waitingMessage.target) {
         case "@all":
@@ -127,7 +128,7 @@ export async function handle_update(event: NewMessageEvent) {
         shared.waitingMessage = undefined;
       }
     } else {
-      if (event.message.text === shared.waitingMessage.target) {
+      if (event.message.text.includes(shared.waitingMessage.target)) {
         if (shared.waitingMessage.reply.length > 0) {
           if (shared.storeChats) {
             shared.currentChat?.messages.push({
