@@ -39,7 +39,7 @@ Example:
                         "reply": "Oh.. Im sorry to hear that. How old are you?",
                         "wait_message": {
                             "target": "@num",
-                            "reply": "Oh so you a kid!"
+                            "reply": "@end"
                         }
                     }
                 },
@@ -47,9 +47,37 @@ Example:
             },
             "delay": 1, // 1 second before next message
         }
+    ],
+    "parallel": [
+        {
+            "target": "f u",
+            "reply": "What?!"
+        },
+        {
+            "target": "stop",
+            "reply": "@end" // This will end the chat and go back to the first message
+        }
     ]
 }
 ```
+
+## Usage
+```
+dox start
+```
+or
+
+```
+npm start -- start
+```
+
+### Available commands:
+- start
+    * --no-check or -nc (dox will not check whether the user is blocked)
+    * --store-usernames(or -su) - Store all received usernames to usernames.json
+	* --store-chats(or -sc) - Store all received chats to chats.json
+- help
+- logout (cleares the session)
 
 ## Keywords
 - @all

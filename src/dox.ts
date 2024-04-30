@@ -86,6 +86,8 @@ export async function handle_update(event: NewMessageEvent) {
         shared.waitingMessage = undefined;
         shared.lastMessage = 0;
         shared.timeSinceLastMessage = 0;
+
+        return;
       }
       await shared.telegram?.client.sendMessage(cfg.CONFIG.target, { message: parallel.reply });
     }
