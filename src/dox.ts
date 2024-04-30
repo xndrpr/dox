@@ -1,6 +1,5 @@
 import { Api } from "telegram";
 import * as cfg from "./config";
-import { Telegram } from "./helpers/telegram.helper";
 import { IConfig } from "./models/IConfig";
 import { NewMessageEvent } from "telegram/events";
 import { shared } from "./shared";
@@ -11,9 +10,9 @@ import LanguageDetect from "languagedetect";
 
 const lngDetector = new LanguageDetect();
 
-;export async function check_block(config: IConfig) {
+; export async function check_block(config: IConfig) {
   try {
-    await shared.telegram?.client.sendMessage(config.target, { message: "Жив?" });
+    await shared.telegram?.client.sendMessage(config.target, { message: "?" });
   } catch (e: any) {
     if (e.errorMessage === "YOU_BLOCKED_USER") {
       await shared.telegram?.client.invoke(new Api.contacts.Unblock({ id: config.target }));
@@ -83,7 +82,9 @@ export async function handle_update(event: NewMessageEvent) {
           return;
       }
 
-      await event.message.reply({ message: shared.waitingMessage.reply });
+      if (shared.waitingMessage.reply.length > 0) {
+        await event.message.reply({ message: shared.waitingMessage.reply });
+      }
 
       if (shared.waitingMessage.wait_message) {
         shared.waitingMessage = shared.waitingMessage.wait_message;
@@ -93,7 +94,9 @@ export async function handle_update(event: NewMessageEvent) {
       }
     } else {
       if (event.message.text === shared.waitingMessage.target) {
-        await event.message.reply({ message: shared.waitingMessage.reply });
+        if (shared.waitingMessage.reply.length > 0) {
+          await event.message.reply({ message: shared.waitingMessage.reply });
+        }
 
         if (shared.waitingMessage.wait_message) {
           shared.waitingMessage = shared.waitingMessage.wait_message;
@@ -115,12 +118,14 @@ export async function START(config: IConfig) {
           && (shared.timeSinceLastMessage >= shared.waitingMessage.timeout)) {
           shared.waitingMessage = undefined;
           shared.timeSinceLastMessage = 0;
+
+          console.log(`Timeout for message ${shared.lastMessage} has been reached.`);
+        } else {
+          shared.timeSinceLastMessage = shared.timeSinceLastMessage + 1;
+          await new Promise((resolve) => setTimeout(resolve, 1 * 1000));
+
+          continue;
         }
-
-        shared.timeSinceLastMessage = shared.timeSinceLastMessage + 1;
-        await new Promise((resolve) => setTimeout(resolve, 1 * 1000));
-
-        continue;
       }
 
       const message = config.messages.find((message) => message.id === shared.lastMessage + 1);
