@@ -1,8 +1,9 @@
-export enum Keywords {
+export enum Keyword {
   Str = '@str',
   Num = '@num',
   Yes = '@yes',
   No = '@no',
+  End = '@end',
 }
 
 export const KEYWORDS = {

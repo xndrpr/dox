@@ -7,17 +7,25 @@ import * as keywords from "./keywords";
 import { UsernamesHelper } from "./helpers/usernames.helper";
 import { WaitMessage } from "./models/WaitMessage";
 import LanguageDetect from "languagedetect";
+import { ChatsHelper } from "./helpers/chats.helper";
 
 const lngDetector = new LanguageDetect();
 
 ; export async function check_block(config: IConfig) {
   try {
+    if (shared.storeChats) {
+      shared.currentChat?.messages.push({
+        from: "me",
+        message: "?",
+      });
+    }
+
     await shared.telegram?.client.sendMessage(config.target, { message: "?" });
   } catch (e: any) {
     if (e.errorMessage === "YOU_BLOCKED_USER") {
       await shared.telegram?.client.invoke(new Api.contacts.Unblock({ id: config.target }));
 
-      await shared.telegram?.client.sendMessage(config.target, { message: "UNBLOCKED ENTER" });
+      await shared.telegram?.client.sendMessage(config.target, { message: "UNBLOCKED ?" });
     } else {
       console.error(e);
     }
@@ -50,6 +58,13 @@ export async function handle_update(event: NewMessageEvent) {
 
   if (event.message.senderId?.toJSNumber() !== id) return;
 
+  if (shared.storeChats) {
+    shared.currentChat?.messages.push({
+      from: "user",
+      message: event.message.text,
+    });
+  }
+
   if (shared.storeUsernames && event.message.text.includes("@")) {
     const username = event.message.text.split("@")[1].split(" ")[0];
     await UsernamesHelper.storeUsername(username);
@@ -59,6 +74,19 @@ export async function handle_update(event: NewMessageEvent) {
     // TODO: Correct typos based on language. const language = lngDetector.detect(event.message.text)[0][0];
 
     if (event.message.text.includes(parallel.target)) {
+      if (parallel.reply.length < 1) return;
+      
+      if (shared.storeChats) {
+        shared.currentChat?.messages.push({
+          from: "me",
+          message: parallel.reply,
+        });
+      }
+      if (parallel.reply.includes("@end")) {
+        shared.waitingMessage = undefined;
+        shared.lastMessage = 0;
+        shared.timeSinceLastMessage = 0;
+      }
       await shared.telegram?.client.sendMessage(cfg.CONFIG.target, { message: parallel.reply });
     }
   });
@@ -83,6 +111,12 @@ export async function handle_update(event: NewMessageEvent) {
       }
 
       if (shared.waitingMessage.reply.length > 0) {
+        if (shared.storeChats) {
+          shared.currentChat?.messages.push({
+            from: "me",
+            message: shared.waitingMessage.reply,
+          });
+        }
         await event.message.reply({ message: shared.waitingMessage.reply });
       }
 
@@ -95,6 +129,13 @@ export async function handle_update(event: NewMessageEvent) {
     } else {
       if (event.message.text === shared.waitingMessage.target) {
         if (shared.waitingMessage.reply.length > 0) {
+          if (shared.storeChats) {
+            shared.currentChat?.messages.push({
+              from: "me",
+              message: shared.waitingMessage.reply,
+            });
+          }
+
           await event.message.reply({ message: shared.waitingMessage.reply });
         }
 
@@ -118,8 +159,6 @@ export async function START(config: IConfig) {
           && (shared.timeSinceLastMessage >= shared.waitingMessage.timeout)) {
           shared.waitingMessage = undefined;
           shared.timeSinceLastMessage = 0;
-
-          console.log(`Timeout for message ${shared.lastMessage} has been reached.`);
         } else {
           shared.timeSinceLastMessage = shared.timeSinceLastMessage + 1;
           await new Promise((resolve) => setTimeout(resolve, 1 * 1000));
@@ -129,8 +168,24 @@ export async function START(config: IConfig) {
       }
 
       const message = config.messages.find((message) => message.id === shared.lastMessage + 1);
-      if (!message) { shared.lastMessage = 0; continue; }
+      if (!message) {
+        if (shared.storeChats) {
+          ChatsHelper.storeChat(shared.currentChat!);
 
+          const chat = { date: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''), messages: [] };
+          shared.currentChat = chat;
+        }
+        shared.lastMessage = 0;
+        continue;
+      }
+
+      if (shared.storeChats) {
+        shared.currentChat?.messages.push({
+          from: "me",
+          message: message.text,
+        });
+      }
+      if (message.text.length < 1) return;
       await shared.telegram?.client.sendMessage(config.target, { message: message.text });
 
       if (message.wait_message) { shared.waitingMessage = message.wait_message; shared.timeSinceLastMessage = 0; }

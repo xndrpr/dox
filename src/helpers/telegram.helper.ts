@@ -17,6 +17,13 @@ export class Telegram {
     this.client.setLogLevel(LogLevel.ERROR);
   }
 
+  async logout() {
+    const env = readFileSync(".env", "utf-8");
+    const newEnv = env.replace(/SESSION=.*/g, 'SESSION=');
+
+    writeFileSync(".env", newEnv);
+  }
+
   async input(text: string) {
     const rl = reaedline.createInterface({
       input: process.stdin,
