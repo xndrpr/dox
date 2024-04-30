@@ -1,13 +1,18 @@
+import { Telegram } from "./helpers/telegram.helper";
 import { WaitMessage } from "./models/WaitMessage";
 
 export interface IShared {
-  waiting_message: WaitMessage | undefined;
-  last_message: number;
-  time_since_last_message: number;
+  waitingMessage: WaitMessage | undefined;
+  lastMessage: number;
+  timeSinceLastMessage: number;
+  storeUsernames: boolean;
+  telegram: Telegram | undefined;
 }
 
 export const shared: IShared = {
-  waiting_message: undefined,
-  last_message: 0,
-  time_since_last_message: 0,
+  telegram: undefined,
+  waitingMessage: undefined,
+  lastMessage: 0,
+  timeSinceLastMessage: 0,
+  storeUsernames: false
 };

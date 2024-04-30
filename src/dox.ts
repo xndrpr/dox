@@ -5,15 +5,20 @@ import { IConfig } from "./models/IConfig";
 import { NewMessageEvent } from "telegram/events";
 import { shared } from "./shared";
 import * as keywords from "./keywords";
+import { UsernamesHelper } from "./helpers/usernames.helper";
+import { WaitMessage } from "./models/WaitMessage";
+import LanguageDetect from "languagedetect";
 
-export async function check_block(telegram: Telegram, config: IConfig) {
+const lngDetector = new LanguageDetect();
+
+;export async function check_block(config: IConfig) {
   try {
-    await telegram.client.sendMessage(config.target, { message: "Жив?" });
+    await shared.telegram?.client.sendMessage(config.target, { message: "Жив?" });
   } catch (e: any) {
     if (e.errorMessage === "YOU_BLOCKED_USER") {
-      await telegram.client.invoke(new Api.contacts.Unblock({ id: config.target }));
+      await shared.telegram?.client.invoke(new Api.contacts.Unblock({ id: config.target }));
 
-      await telegram.client.sendMessage(config.target, { message: "UNBLOCKED ENTER" });
+      await shared.telegram?.client.sendMessage(config.target, { message: "UNBLOCKED ENTER" });
     } else {
       console.error(e);
     }
@@ -23,9 +28,45 @@ export async function check_block(telegram: Telegram, config: IConfig) {
 export async function handle_update(event: NewMessageEvent) {
   if (!event.isPrivate) return;
 
-  if (shared.waiting_message) {
-    if (shared.waiting_message.target.includes("@")) {
-      switch (shared.waiting_message.target) {
+  let id;
+  if (cfg.CONFIG.target.includes("@")) {
+    try {
+      const result = await shared.telegram?.client.invoke(new Api.contacts.ResolveUsername({ username: cfg.CONFIG.target.replace("@", "") }));
+
+      const user = result?.users[0];
+      if (!user) return;
+
+      id = user.id.toJSNumber();
+    } catch (e) {
+      console.error(e);
+    }
+  } else {
+    try {
+      id = parseInt(cfg.CONFIG.target);
+    } catch (e) {
+      console.error(e);
+      return;
+    }
+  }
+
+  if (event.message.senderId?.toJSNumber() !== id) return;
+
+  if (shared.storeUsernames && event.message.text.includes("@")) {
+    const username = event.message.text.split("@")[1].split(" ")[0];
+    await UsernamesHelper.storeUsername(username);
+  }
+
+  cfg.CONFIG.parallel.forEach(async (parallel: WaitMessage) => {
+    // TODO: Correct typos based on language. const language = lngDetector.detect(event.message.text)[0][0];
+
+    if (event.message.text.includes(parallel.target)) {
+      await shared.telegram?.client.sendMessage(cfg.CONFIG.target, { message: parallel.reply });
+    }
+  });
+
+  if (shared.waitingMessage) {
+    if (shared.waitingMessage.target.includes("@")) {
+      switch (shared.waitingMessage.target) {
         case "@all":
           if (!event.message.text) return;
           break;
@@ -42,53 +83,53 @@ export async function handle_update(event: NewMessageEvent) {
           return;
       }
 
-      await event.message.reply({ message: shared.waiting_message.reply });
+      await event.message.reply({ message: shared.waitingMessage.reply });
 
-      if (shared.waiting_message.wait_message) {
-        shared.waiting_message = shared.waiting_message.wait_message;
-        shared.time_since_last_message = 0;
+      if (shared.waitingMessage.wait_message) {
+        shared.waitingMessage = shared.waitingMessage.wait_message;
+        shared.timeSinceLastMessage = 0;
       } else {
-        shared.waiting_message = undefined;
+        shared.waitingMessage = undefined;
       }
     } else {
-      if (event.message.text === shared.waiting_message.target) {
-        await event.message.reply({ message: shared.waiting_message.reply });
+      if (event.message.text === shared.waitingMessage.target) {
+        await event.message.reply({ message: shared.waitingMessage.reply });
 
-        if (shared.waiting_message.wait_message) {
-          shared.waiting_message = shared.waiting_message.wait_message;
-          shared.time_since_last_message = 0;
+        if (shared.waitingMessage.wait_message) {
+          shared.waitingMessage = shared.waitingMessage.wait_message;
+          shared.timeSinceLastMessage = 0;
         } else {
-          shared.waiting_message = undefined;
+          shared.waitingMessage = undefined;
         }
       }
     }
   }
 }
 
-export async function START(telegram: Telegram, config: IConfig) {
+export async function START(config: IConfig) {
   while (true) {
     try {
-      if (shared.waiting_message) {
-        if (shared.waiting_message.timeout
-          && shared.time_since_last_message
-          && (shared.time_since_last_message >= shared.waiting_message.timeout)) {
-          shared.waiting_message = undefined;
-          shared.time_since_last_message = 0;
+      if (shared.waitingMessage) {
+        if (shared.waitingMessage.timeout
+          && shared.timeSinceLastMessage
+          && (shared.timeSinceLastMessage >= shared.waitingMessage.timeout)) {
+          shared.waitingMessage = undefined;
+          shared.timeSinceLastMessage = 0;
         }
 
-        shared.time_since_last_message = shared.time_since_last_message + 1;
+        shared.timeSinceLastMessage = shared.timeSinceLastMessage + 1;
         await new Promise((resolve) => setTimeout(resolve, 1 * 1000));
 
         continue;
       }
 
-      const message = config.messages.find((message) => message.id === shared.last_message + 1);
-      if (!message) { shared.last_message = 0; continue; }
+      const message = config.messages.find((message) => message.id === shared.lastMessage + 1);
+      if (!message) { shared.lastMessage = 0; continue; }
 
-      await telegram.client.sendMessage(config.target, { message: message.text });
+      await shared.telegram?.client.sendMessage(config.target, { message: message.text });
 
-      if (message.wait_message) { shared.waiting_message = message.wait_message; shared.time_since_last_message = 0; }
-      shared.last_message = message.id;
+      if (message.wait_message) { shared.waitingMessage = message.wait_message; shared.timeSinceLastMessage = 0; }
+      shared.lastMessage = message.id;
 
       await new Promise((resolve) => setTimeout(resolve, message.delay * 1000));
     } catch (e: any) {
